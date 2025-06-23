@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  crypto_scheduler:
+      build:
+        context: ./crypto_scheduler
+      container_name: crypto_scheduler
+      env_file: ./crypto_scheduler/.env
+      volumes:
+        - ./crypto_scheduler:/app
+      depends_on:
+        - db
+        - redis
+  gold_scheduler:
+    build:
+      context: ./gold_scheduler
+    container_name: gold_scheduler
+    env_file: ./gold_scheduler/.env
+    volumes:
+      - ./gold_scheduler:/app
+    depends_on:
+      - db
+      - redis
+
+  forex_scheduler:
+    build:
+      context: ./forex_scheduler
+    container_name: forex_scheduler
+    env_file: ./forex_scheduler/.env
+    volumes:
+      - ./forex_scheduler:/app
+    depends_on:
+      - db
+      - redis
+  db:
+    image: timescale/timescaledb:latest-pg14
+    container_name: timescaledb
+    restart: always
+    environment:
+      POSTGRES_DB: crypto_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    container_name: redis_cache
+    ports:
+      - "6379:6379"
+    restart: always
+
+volumes:
+  pgdata:

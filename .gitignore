@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+env/
+venv/
+
+# Environment files
+.env
+.env.*
+!.env-example
+
+# VSCode
+.vscode/
+
+# Docker
+*.log
+
+# OS generated
+.DS_Store
+Thumbs.db
+
+# Pytest cache
+.pytest_cache/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Database data (if any local dump)
+*.sqlite3
+
+# Ignore compiled files in all submodules
+crypto_scheduler/**/__pycache__/
+forex_scheduler/**/__pycache__/
