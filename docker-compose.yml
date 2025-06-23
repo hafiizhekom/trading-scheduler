@@ -11,27 +11,41 @@ services:
       depends_on:
         - db
         - redis
-  gold_scheduler:
+  # gold_scheduler:
+  #   build:
+  #     context: ./gold_scheduler
+  #   container_name: gold_scheduler
+  #   env_file: ./gold_scheduler/.env
+  #   volumes:
+  #     - ./gold_scheduler:/app
+  #   depends_on:
+  #     - db
+  #     - redis
+
+  # forex_scheduler:
+  #   build:
+  #     context: ./forex_scheduler
+  #   container_name: forex_scheduler
+  #   env_file: ./forex_scheduler/.env
+  #   volumes:
+  #     - ./forex_scheduler:/app
+  #   depends_on:
+  #     - db
+  #     - redis
+
+  backend:
     build:
-      context: ./gold_scheduler
-    container_name: gold_scheduler
-    env_file: ./gold_scheduler/.env
+      context: ./app_backend
+    container_name: app_backend
+    ports:
+      - "8000:8000"
+    env_file: ./app_backend/.env
     volumes:
-      - ./gold_scheduler:/app
+      - ./app_backend:/app
     depends_on:
       - db
       - redis
 
-  forex_scheduler:
-    build:
-      context: ./forex_scheduler
-    container_name: forex_scheduler
-    env_file: ./forex_scheduler/.env
-    volumes:
-      - ./forex_scheduler:/app
-    depends_on:
-      - db
-      - redis
   db:
     image: timescale/timescaledb:latest-pg14
     container_name: timescaledb
