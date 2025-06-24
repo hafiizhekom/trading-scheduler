@@ -18,11 +18,12 @@ def get_last_price(symbol):
     return rds.hgetall(key)  # {'price': ..., 'timestamp': ...}
 
 def set_last_price(symbol, price, timestamp):
-    key = f"price:{symbol}"
+    key = f"crypto_price:{symbol}"
     payload = {
         "symbol": symbol,
         "price": price,
-        "timestamp": str(timestamp)
+        "timestamp": str(timestamp),
+        "asset_type": "crypto"
     }
     rds.hset(key, mapping={"price": price, "timestamp": timestamp})
     rds.expire(key, REDIS_TTL)  # ✅ TTL dalam detik

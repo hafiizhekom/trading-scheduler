@@ -26,7 +26,8 @@ def job():
 
 def start_scheduler():
     logging.info("Scheduler started. Fetching every 1 minute.")
-    schedule.every(1).minutes.do(job)
+    # schedule.every(1).minutes.do(job)
+    schedule.every(10).seconds.do(job)
     job()
     while True:
         schedule.run_pending()
