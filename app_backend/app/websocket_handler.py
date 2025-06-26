@@ -2,10 +2,21 @@
 from fastapi import WebSocket, WebSocketDisconnect
 import json
 import logging
+from app.fusion_service import get_effective_price
+from datetime import datetime
+
 
 logger = logging.getLogger(__name__)
 
 active_connections = {}  # Format: {channel_key: [websocket_connections]}
+
+def extract_datetime(data: dict) -> datetime:
+    if "time" in data:
+        return datetime.fromisoformat(data["time"])
+    elif "timestamp" in data:
+        return datetime.utcfromtimestamp(float(data["timestamp"]))
+    else:
+        raise ValueError("Data must contain 'time' or 'timestamp'")
 
 async def handle_websocket(websocket: WebSocket, channel_key: str, asset_type: str, symbol: str):
     """
@@ -128,14 +139,39 @@ async def broadcast_to_clients(symbol, payload, asset_type="crypto"):
         logger.info(f"[WS] Successfully sent to {total_sent} connections")
 
 # Specific broadcast functions for different asset types
-async def broadcast_crypto_price(symbol, payload):
-    """Broadcast crypto price update"""
-    await broadcast_to_clients(symbol, payload, "crypto")
+async def broadcast_crypto_price(symbol: str, data: dict):
+    # dt = datetime.fromisoformat(data["time"])
+    dt = extract_datetime(data)
+    price, is_override = await get_effective_price("crypto", symbol=symbol, at_time=dt)
+    
+    data["price"] = price
+    data["override"] = is_override
+    
+    # lanjut broadcast ke semua koneksi yang subscribe ke crypto:{symbol}
+    # await broadcast_to_clients(f"crypto:{symbol}", data)
+    await broadcast_to_clients(symbol, data, asset_type="crypto")
 
-async def broadcast_gold_price(payload):
-    """Broadcast gold price update"""
-    await broadcast_to_clients("GOLD", payload, "gold")
 
-async def broadcast_forex_rate(symbol, payload):
-    """Broadcast forex rate update"""
-    await broadcast_to_clients(symbol, payload, "forex")
+async def broadcast_forex_rate(symbol: str, data: dict):
+    # dt = datetime.fromisoformat(data["time"])
+    dt = extract_datetime(data)
+    price, is_override = await get_effective_price("forex", symbol=symbol, at_time=dt)
+    
+    data["rate"] = price
+    data["override"] = is_override
+    
+    # await broadcast_to_clients(f"forex:{symbol}", data)
+    await broadcast_to_clients(symbol, data, asset_type="forex")
+
+async def broadcast_gold_price(data: dict):
+    # dt = datetime.fromisoformat(data["time"])
+    dt = extract_datetime(data)
+    type_gold = data.get("type_gold") or "ANTAM"
+    price, is_override = await get_effective_price("gold", type_gold=type_gold, at_time=dt)
+    
+    data["sell"] = price
+    data["buy"] = price
+    data["override"] = is_override
+    
+    # await broadcast_to_clients("gold", data)
+    await broadcast_to_clients(type_gold, data, asset_type="gold")

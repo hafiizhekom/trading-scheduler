@@ -1,8 +1,9 @@
 # app/router.py
-from fastapi import APIRouter, WebSocket, HTTPException, status
+from fastapi import APIRouter, WebSocket, HTTPException, status, Query
 from app.websocket_handler import handle_websocket, active_connections
 from app.models import PriceOverrideRequest
 from app.override_service import handle_override
+from app.db import get_crypto_history, get_forex_history, get_gold_history
 
 router = APIRouter()
 
@@ -14,6 +15,18 @@ async def override_price(payload: PriceOverrideRequest):
     except Exception as e:
         raise HTTPException(500, detail=f"Override failed: {str(e)}")
     
+@router.get("/api/history/crypto/{symbol}")
+def api_crypto_history(symbol: str):
+    return get_crypto_history(symbol)
+
+@router.get("/api/history/forex/{symbol}")
+def api_forex_history(symbol: str):
+    return get_forex_history(symbol)
+
+@router.get("/api/history/gold")
+def api_gold_history(type_gold: str = Query("ANTAM")):
+    return get_gold_history(type_gold)
+
 # Crypto WebSocket endpoint
 @router.websocket("/ws/crypto/{symbol}")
 async def crypto_websocket_endpoint(websocket: WebSocket, symbol: str):

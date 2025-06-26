@@ -12,7 +12,8 @@ async def publish_override_to_redis(payload: PriceOverrideRequest):
             "symbol": payload.symbol,
             "price": float(payload.custom_price),
             "time": payload.datetime.isoformat(),
-            "override": True
+            "override": True,
+            "asset_type": "crypto"
         }
 
     elif payload.type == "forex":
@@ -22,7 +23,8 @@ async def publish_override_to_redis(payload: PriceOverrideRequest):
             "symbol": payload.symbol,
             "rate": float(payload.custom_price),
             "time": payload.datetime.isoformat(),
-            "override": True
+            "override": True,
+            "asset_type": "forex"
         }
 
     elif payload.type == "gold":
@@ -33,7 +35,8 @@ async def publish_override_to_redis(payload: PriceOverrideRequest):
             "sell": float(payload.custom_price),
             "buy": float(payload.custom_price),
             "time": payload.datetime.isoformat(),
-            "override": True
+            "override": True,
+            "asset_type": "gold"
         }
 
     await redis.set(redis_key, payload.custom_price)
