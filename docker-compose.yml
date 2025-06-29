@@ -11,6 +11,7 @@ services:
       depends_on:
         - db
         - redis
+        
   gold_scheduler:
     build:
       context: ./gold_scheduler
@@ -22,16 +23,16 @@ services:
       - db
       - redis
 
-  # forex_scheduler:
-  #   build:
-  #     context: ./forex_scheduler
-  #   container_name: forex_scheduler
-  #   env_file: ./forex_scheduler/.env
-  #   volumes:
-  #     - ./forex_scheduler:/app
-  #   depends_on:
-  #     - db
-  #     - redis
+  forex_scheduler:
+    build:
+      context: ./forex_scheduler
+    container_name: forex_scheduler
+    env_file: ./forex_scheduler/.env
+    volumes:
+      - ./forex_scheduler:/app
+    depends_on:
+      - db
+      - redis
 
   backend:
     build:

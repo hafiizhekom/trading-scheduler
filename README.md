@@ -1,22 +1,28 @@
 # Trading Scheduler Suite
 
-Proyek ini terdiri dari tiga scheduler terpisah untuk mengambil data harga secara periodik: **Crypto**, **Forex**, dan **Gold**. Setiap scheduler berjalan sebagai service terpisah menggunakan Docker, mengambil data dari API eksternal, menyimpannya ke TimescaleDB, dan melakukan cache serta publikasi update ke Redis.
+Trading Scheduler Suite is an integrated system consisting of three separate schedulers for periodically fetching price data: **Crypto**, **Forex**, and **Gold**. Each scheduler runs as a separate service using Docker, fetches data from external APIs, stores it in TimescaleDB, and handles caching and price update publishing to Redis. There is also a FastAPI backend for API and WebSocket access.
 
-## Fitur Utama
+## Main Features
 
-- **Crypto Scheduler**: Mengambil harga cryptocurrency dari Coindesk API.
-- **Forex Scheduler**: Mengambil kurs mata uang dari API forex.
-- **Gold Scheduler**: Mengambil harga emas dari API eksternal.
-- Penyimpanan data historis ke TimescaleDB (PostgreSQL).
-- Cache harga terakhir di Redis dengan TTL.
-- Publikasi update harga ke channel Redis (pub/sub).
-- Scheduler otomatis setiap 1 menit.
-- Mode pengembangan dengan auto-reload (watcher).
+- **Crypto Scheduler**: Fetches cryptocurrency prices from APIs (e.g., Coindesk).
+- **Forex Scheduler**: Fetches foreign exchange rates from forex APIs.
+- **Gold Scheduler**: Fetches gold prices from external APIs.
+- Stores historical data in TimescaleDB (PostgreSQL).
+- Caches the latest prices in Redis with TTL.
+- Publishes price updates to Redis channels (pub/sub).
+- Automatic scheduler (default: every 1 minute, configurable).
+- Development mode with auto-reload (watcher).
+- FastAPI backend for API, WebSocket, and price override.
 
-## Struktur Direktori
+## Directory Structure
 
 ```
 .
+├── app_backend/
+│   ├── app/
+│   ├── Dockerfile
+│   ├── requirements.txt
+│   └── .env
 ├── crypto_scheduler/
 │   ├── app/
 │   ├── Dockerfile
@@ -38,69 +44,74 @@ Proyek ini terdiri dari tiga scheduler terpisah untuk mengambil data harga secar
 └── README.md
 ```
 
-## Cara Menjalankan
+## How to Run
 
-### 1. Persiapan
+### 1. Preparation
 
-- Pastikan Docker & Docker Compose sudah terinstal.
-- Salin file `.env-example` ke masing-masing folder scheduler sebagai `.env` dan sesuaikan jika perlu.
+- Make sure Docker & Docker Compose are installed.
+- Copy the `.env-example` file to each scheduler and backend folder as `.env`, then adjust the configuration as needed.
 
-### 2. Build & Jalankan Semua Service
+### 2. Build & Run All Services
 
 ```sh
 docker-compose up --build
 ```
 
-Service yang berjalan:
-- `crypto_scheduler`: Scheduler harga crypto
-- `forex_scheduler`: Scheduler kurs forex
-- `gold_scheduler`: Scheduler harga emas
+Services that will run:
+- `crypto_scheduler`: Crypto price scheduler
+- `forex_scheduler`: Forex rate scheduler
+- `gold_scheduler`: Gold price scheduler
+- `app_backend`: FastAPI backend (API & WebSocket)
 - `db`: TimescaleDB (PostgreSQL)
-- `redis`: Redis untuk cache & pub/sub
+- `redis`: Redis for cache & pub/sub
 
-### 3. Mode Pengembangan (Auto-reload)
+### 3. Development Mode (Auto-reload)
 
-Untuk mode pengembangan dengan auto-reload, jalankan watcher di masing-masing scheduler:
+For development mode with auto-reload, run the watcher in each scheduler/backend:
 
 ```sh
 docker-compose run --service-ports crypto_scheduler python watcher.py
 docker-compose run --service-ports forex_scheduler python watcher.py
 docker-compose run --service-ports gold_scheduler python watcher.py
+docker-compose run --service-ports app_backend python watcher.py
 ```
 
-## Konfigurasi Lingkungan
+## Environment Configuration
 
-Edit file `.env` di masing-masing scheduler:
+Edit the `.env` file in each scheduler/backend:
 
 - **Database**: `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_NAME`, `DATABASE_USER`, `DATABASE_PASSWORD`
 - **API**:
   - Crypto: `COINDESK_BASE_URL`, `COINDESK_MARKET`, `SYMBOLS`
   - Forex: `FOREX_BASE_URL`, `FOREX_API_KEY`, `FOREX_SYMBOLS`
-  - Gold: (disesuaikan dengan API yang digunakan)
+  - Gold: `GOLD_BASE_URL`, etc.
 - **Redis**: `REDIS_HOST`, `REDIS_PORT`, `REDIS_DB`, `REDIS_TTL`, `REDIS_PUBSUB_CHANNEL`
 
-Contoh konfigurasi dapat dilihat di [.env-example](.env-example).
+See [.env-example](.env-example) for configuration examples.
 
-## Struktur Database
+## Database Structure
 
 - **crypto_prices**: (time, symbol, price, volume)
 - **forex_rates**: (time, symbol, rate)
 - **gold_prices**: (time, type_gold, sell, buy)
+- **crypto_price_overrides**, **forex_rate_overrides**, **gold_price_overrides**: for price override features
 
-> **Catatan:** Pastikan tabel-tabel di atas sudah dibuat di TimescaleDB sebelum menjalankan aplikasi.
+> **Note:** Make sure the tables above are created in TimescaleDB before running the application.
 
-## Penjelasan Modul
+## Module Overview
 
-- [`app/coindesk.py`](crypto_scheduler/app/coindesk.py): Fetch harga crypto dari Coindesk.
-- [`app/forex.py`](forex_scheduler/app/forex.py): Fetch kurs forex dari API.
-- [`app/db.py`](crypto_scheduler/app/db.py), [`forex_scheduler/app/db.py`](forex_scheduler/app/db.py), [`gold_scheduler/app/db.py`](gold_scheduler/app/db.py): Insert data ke database.
-- [`app/cache.py`](crypto_scheduler/app/cache.py): Cache harga terakhir & publish ke Redis.
-- [`app/scheduler.py`](crypto_scheduler/app/scheduler.py): Scheduler utama.
-- `watcher.py`: Watcher untuk auto-reload saat development.
+- [`crypto_scheduler/app/coindesk.py`](crypto_scheduler/app/coindesk.py): Fetches crypto prices from API.
+- [`forex_scheduler/app/forex.py`](forex_scheduler/app/forex.py): Fetches forex rates from API.
+- [`gold_scheduler/app/gold.py`](gold_scheduler/app/gold.py): Fetches gold prices from API.
+- [`*_scheduler/app/db.py`](crypto_scheduler/app/db.py), [`forex_scheduler/app/db.py`](forex_scheduler/app/db.py), [`gold_scheduler/app/db.py`](gold_scheduler/app/db.py): Inserts data into the database.
+- [`*_scheduler/app/cache.py`](crypto_scheduler/app/cache.py), etc.: Caches the latest prices & publishes to Redis.
+- [`*_scheduler/app/scheduler.py`](crypto_scheduler/app/scheduler.py), etc.: Main scheduler.
+- [`app_backend/app/`](app_backend/app/): FastAPI backend (API, WebSocket, override, etc.).
+- `watcher.py`: Watcher for auto-reload during development.
 
-## Dependensi
+## Dependencies
 
-Lihat `requirements.txt` di masing-masing scheduler:
+See `requirements.txt` in each scheduler and backend:
 
 - requests
 - python-dotenv
@@ -108,3 +119,4 @@ Lihat `requirements.txt` di masing-masing scheduler:
 - psycopg2-binary
 - schedule
 - watchfiles
+- fastapi, uvicorn (backend)

@@ -57,21 +57,6 @@ async def forex_websocket_endpoint(websocket: WebSocket, symbol: str):
     channel_key = f"forex:{symbol}"
     await handle_websocket(websocket, channel_key, "forex", symbol)
 
-# # Alternative forex endpoint (shorter URL)
-# @router.websocket("/ws/{symbol}")
-# async def currency_websocket_endpoint(websocket: WebSocket, symbol: str):
-#     """
-#     Alternative WebSocket endpoint for forex rates
-#     Example: ws://localhost:8000/ws/USD
-#     """
-#     # Assume it's forex if it's 3 characters (currency code)
-#     if len(symbol) == 3 and symbol.isupper():
-#         channel_key = f"forex:{symbol}"
-#         await handle_websocket(websocket, channel_key, "forex", symbol)
-#     else:
-#         # Fallback to general symbol handling
-#         await handle_websocket(websocket, symbol, "general", symbol)
-
 # Debug endpoint
 @router.get("/debug/connections")
 async def debug_connections():
